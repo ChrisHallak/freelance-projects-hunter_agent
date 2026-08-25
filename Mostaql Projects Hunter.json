@@ -1,0 +1,421 @@
+{
+  "name": "Mostaql Projects Hunter",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a freelance project matching assistant.\n\nYour task is to evaluate whether a freelance project is suitable for a freelancer based on the project's actual technical requirements and the freelancer's skills.\n\nPROJECT:\nTitle:\n{{ $json.title }}\n\nDescription:\n{{ $json.description }}\n\nFREELANCER SKILLS:\n{{ $json.skills }}\n\nMATCHING RULES:\n\n1. Compare the actual technical requirements of the project with the freelancer's skills.\n2. Do NOT match based only on individual keywords.\n3. Consider the overall scope and required technologies.\n4. HIGH_MATCH:\n   - The freelancer can complete most or all of the project using their existing skills.\n   - Only small or non-critical gaps may exist.\n5. MEDIUM_MATCH:\n   - The freelancer can complete a significant part of the project but needs to learn or use some additional technologies.\n6. LOW_MATCH:\n   - The project requires skills that are mostly unrelated to the freelancer's skills.\n7. Score must be between 0 and 100:\n   - HIGH_MATCH: 75-100\n   - MEDIUM_MATCH: 40-74\n   - LOW_MATCH: 0-39\n8. should_apply must be:\n   - true for HIGH_MATCH\n   - true for MEDIUM_MATCH only if the freelancer can realistically complete the project\n   - false for LOW_MATCH\n9. matched_skills must contain only skills explicitly supported by the freelancer's skills.\n10. missing_skills must contain important technical requirements that are not present in the freelancer's skills.\n11. If should_apply is false, proposal must be an empty string.\n12. If should_apply is true, write a short, professional proposal based specifically on the project requirements and the freelancer's relevant skills. Do not invent experience or skills.\n\nIMPORTANT OUTPUT RULES:\n\n- Return ONLY valid JSON.\n- Do not use Markdown.\n- Do not add explanations before or after the JSON.\n- Use exactly these 6 fields:\n  match\n  score\n  matched_skills\n  missing_skills\n  should_apply\n  arabic proposal\n\nOUTPUT FORMAT:\n\n{\n  \"match\": \"HIGH_MATCH\",\n  \"score\": 90,\n  \"matched_skills\": [\"Python\", \"RAG\", \"LLMs\"],\n  \"missing_skills\": [\"Pinecone\"],\n  \"should_apply\": true,\n  \"proposal\": \"...\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1024,
+        -144
+      ],
+      "id": "f2c558eb-bb2e-4a84-926d-d4faa05c796e",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "feedUrl": "https://mostaql.com/rss?category=ai-machine-learning"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -144
+      ],
+      "id": "a0df5e99-eb66-4d50-98ba-76e623f03169",
+      "name": "Trigger New Projects"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        320,
+        -144
+      ],
+      "id": "55b56922-7adb-4105-9a25-6e990c43b4d8",
+      "name": "Fetch Project Details"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "description",
+              "cssSelector": ".text-wrapper-div p"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        -144
+      ],
+      "id": "03ebe49b-689e-42aa-86d0-82ec09f5b9b5",
+      "name": "Extract Project Content"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85689780-d448-453b-b008-60b0e1c5585d",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "969fde2e-c8df-4dd5-870f-f2ae832732df",
+              "name": "skills",
+              "value": "  مرحبا أنا مهندسة معلوماتية خبرة ثلاث سنوات في تطوير تطبيقات الذكاء الصنعي وخصوصا بما يتعلق بالرؤية الحاسوبية Computer Vision او نماذج اللغة الكبيرة LLM بالاضافة الى تعلم الالة Machine Learning , استطيع مساعدتك بكل مايتعلق بالذكاء الصنعي سواء تطوير نموذج الذكاء الصنعي الخاص بك او تطوير تطبيقات مدعومة بالذكاء الصنعي وبإمكاني ايضا تحليل نظامك لدراسة امكانية دمجه بالذكاء الصنعي.  skills : 1 - لغة Python 2 - Deep learning 3 - Computer vision 4 - prompt engineering 5 - LLM 6 - AI Agents 7 - AI Automation 8 - RAG 9 - Machine Learning 10 - n8n 11 - PDF processing",
+              "type": "string"
+            },
+            {
+              "id": "4c78a1fb-b4e2-4f26-b808-b87c79ee9466",
+              "name": "title",
+              "value": "={{ $('Trigger New Projects').item.json.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        832,
+        -144
+      ],
+      "id": "38639a19-c704-4516-a4b2-375818efed8e",
+      "name": "Prepare Project Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "97ce193a-c93d-4e81-af9e-90fe14fb7a4c",
+              "leftValue": "={{ $json.output.score }}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1392,
+        -144
+      ],
+      "id": "972ac47d-b157-401e-9a60-381fd897037d",
+      "name": "Check Match Score"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=مشروع جديد بانتظارك 🤖\n\nproject : {{ $('Trigger New Projects').item.json.link }}\n\n🔥 Match: {{ $('Basic LLM Chain').item.json.output.match }}\n\n📊 Score: {{ $('Basic LLM Chain').item.json.output.score }}/100\n\n✅ Should Apply: {{ $('Basic LLM Chain').item.json.output.should_apply ? 'Yes' : 'No' }}\n\n💡 Matched Skills:\n{{ $('Basic LLM Chain').item.json.output.matched_skills.map(skill => '• ' + skill).join('\\n') }}\n\n⚠️ Missing Skills:*\n{{ $('Basic LLM Chain').item.json.output.missing_skills.map(skill => '• ' + skill).join('\\n') }}\n\n📝 Proposal:\n\n{{ $('Basic LLM Chain').item.json.output.proposal }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1888,
+        -160
+      ],
+      "id": "f89f9815-b146-45aa-a472-56ece08d79aa",
+      "name": "Send Telegram Notification",
+      "webhookId": "c59e6ee0-9241-43db-b97f-dbb8018f79b6",
+      "credentials": {
+        "telegramApi": {
+          "id": "p5O0jR4ZtR1DUJvV",
+          "name": "Telegram account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c15db66d-9331-43e9-b3bf-33035fdd3912",
+              "name": "chat_id",
+              "value": "719805515",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1648,
+        -160
+      ],
+      "id": "8a9a67c6-1771-467f-8a65-4515b137136f",
+      "name": "Format Telegram Alert"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "DeepSeek-V3-0324",
+          "mode": "list",
+          "cachedResultName": "DeepSeek-V3-0324"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        80
+      ],
+      "id": "d16472c2-bfd6-4b58-9166-77490dbbddcd",
+      "name": "LLM Matching Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xhtykLFBvvFSjq9d",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"match\": \"HIGH_MATCH\",\n  \"score\": 0,\n  \"matched_skills\": [\n    \"Python\",\n    \"RAG\",\n    \"LLMs\"\n  ],\n  \"missing_skills\": [\n    \"Pinecone\"\n  ],\n  \"should_apply\": true,\n  \"proposal\": \"قرات متطلبات المشروع وفهمت متطلباتك  وأرى انني مناسب جدا لهذا العرض لان مهاراتي تتطابق تمام \"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1248,
+        64
+      ],
+      "id": "4908ac85-d8b4-453c-ac6f-ad5744d14afd",
+      "name": "Structured Match Output"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "DeepSeek-Coder",
+          "mode": "list",
+          "cachedResultName": "DeepSeek-Coder"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1248,
+        240
+      ],
+      "id": "7217bf20-43ce-49b7-90ad-85cf3ba1ba3f",
+      "name": "Output Parser Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "xhtykLFBvvFSjq9d",
+          "name": "OpenAI account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Basic LLM Chain": [
+      {
+        "json": {
+          "output": {
+            "match": "HIGH_MATCH",
+            "score": 90,
+            "matched_skills": [
+              "Python",
+              "Deep learning",
+              "Computer vision",
+              "Machine Learning"
+            ],
+            "missing_skills": [
+              "3D modeling specific libraries"
+            ],
+            "should_apply": true,
+            "proposal": "باعتباري مهندسة معلوماتية مع خبرة في الذكاء الاصطناعي والرؤية الحاسوبية، أستطيع تطوير برنامج لتقييم دقة تحضير الأسنان باستخدام تقنيات التعلم العميق. سأقوم بتحليل الصور ثلاثية الأبعاد (OBJ/STL) لاكتشاف الأخطاء وتقييم العمل بناءً على المعايير المحددة. لدي خبرة في معالجة الصور وتحليلها باستخدام Python وتقنيات Machine Learning مما يجعلني مؤهلة لهذا المشروع."
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Format Telegram Alert": [
+      {
+        "json": {
+          "chat_id": "719805515"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Check Match Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger New Projects": {
+      "main": [
+        [
+          {
+            "node": "Fetch Project Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Project Details": {
+      "main": [
+        [
+          {
+            "node": "Extract Project Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Project Content": {
+      "main": [
+        [
+          {
+            "node": "Prepare Project Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Project Data": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Match Score": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Telegram Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Matching Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Match Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Match Output",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2d7e48db-7e00-48bf-82bc-a23863a73643",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6da8d0db72ab10d97b170c71b84a1dea5c90ae3a28f6d0664c59e62499a8e39e"
+  },
+  "nodeGroups": [],
+  "id": "TN9EBdPk9tpbpGhN",
+  "tags": []
+}
