@@ -1,6 +1,3 @@
-# freelance-projects-hunter_agent
-AI-powered n8n automation that monitors freelance projects, matches them against my skills using an LLM, and sends relevant opportunities to Telegram.
-
 # Freelance Projects Hunter
 
 An AI-powered automation that monitors freelance projects, evaluates them against my technical skills using an LLM, and sends Telegram notifications when a relevant opportunity is found.
